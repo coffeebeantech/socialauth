@@ -42,171 +42,171 @@ import org.brickred.socialauth.util.Response;
 
 public class OAuth1 implements OAuthStrategyBase {
 
-	private static final long serialVersionUID = -447820298609650347L;
-	private final Log LOG = LogFactory.getLog(OAuth1.class);
+  private static final long serialVersionUID = -447820298609650347L;
+  private final Log LOG = LogFactory.getLog(OAuth1.class);
 
-	private AccessGrant accessToken;
-	private AccessGrant requestToken;
-	private OAuthConsumer oauth;
-	private boolean providerState;
-	private Map<String, String> endpoints;
-	private String scope;
-	private Permission permission;
-	private String providerId;
+  private AccessGrant accessToken;
+  private AccessGrant requestToken;
+  private OAuthConsumer oauth;
+  private boolean providerState;
+  private Map<String, String> endpoints;
+  private String scope;
+  private Permission permission;
+  private String providerId;
 
-	public OAuth1(final OAuthConfig config, final Map<String, String> endpoints) {
-		oauth = new OAuthConsumer(config);
-		this.endpoints = endpoints;
-		permission = Permission.ALL;
-		providerId = config.getId();
-	}
+  public OAuth1(final OAuthConfig config, final Map<String, String> endpoints) {
+    oauth = new OAuthConsumer(config);
+    this.endpoints = endpoints;
+    permission = Permission.ALL;
+    providerId = config.getId();
+  }
 
-	@Override
-	public String getLoginRedirectURL(final String successUrl) throws Exception {
-		return getLoginRedirectURL(successUrl, null);
-	}
+  @Override
+  public String getLoginRedirectURL(final String successUrl) throws Exception {
+    return getLoginRedirectURL(successUrl, null);
+  }
 
-	@Override
-	public String getLoginRedirectURL(final String successUrl,
-			Map<String, String> requestParams) throws Exception {
-		LOG.info("Determining URL for redirection");
-		providerState = true;
-		LOG.debug("Call to fetch Request Token");
-		requestToken = oauth.getRequestToken(
-				endpoints.get(Constants.OAUTH_REQUEST_TOKEN_URL), successUrl);
-		String authUrl = endpoints.get(Constants.OAUTH_AUTHORIZATION_URL);
-		if (scope != null) {
-			if (scope.contains("=")) {
-				authUrl += "?" + scope;
-			} else {
-				authUrl += "?scope=" + scope;
-			}
-		}
-		StringBuilder urlBuffer = oauth.buildAuthUrl(authUrl, requestToken,
-				successUrl);
-		if (requestParams != null && !requestParams.isEmpty()) {
-			for (String key : requestParams.keySet()) {
-				urlBuffer.append("&");
-				urlBuffer.append(key).append("=")
-						.append(requestParams.get(key));
-			}
-		}
-		LOG.info("Redirection to following URL should happen : "
-				+ urlBuffer.toString());
-		return urlBuffer.toString();
-	}
+  @Override
+  public String getLoginRedirectURL(final String successUrl,
+      Map<String, String> requestParams) throws Exception {
+    LOG.info("Determining URL for redirection");
+    providerState = true;
+    LOG.debug("Call to fetch Request Token");
+    requestToken = oauth.getRequestToken(
+        endpoints.get(Constants.OAUTH_REQUEST_TOKEN_URL), successUrl);
+    String authUrl = endpoints.get(Constants.OAUTH_AUTHORIZATION_URL);
+    if (scope != null) {
+      if (scope.contains("=")) {
+        authUrl += "?" + scope;
+      } else {
+        authUrl += "?scope=" + scope;
+      }
+    }
+    StringBuilder urlBuffer = oauth.buildAuthUrl(authUrl, requestToken,
+        successUrl);
+    if (requestParams != null && !requestParams.isEmpty()) {
+      for (String key : requestParams.keySet()) {
+        urlBuffer.append("&");
+        urlBuffer.append(key).append("=")
+            .append(requestParams.get(key));
+      }
+    }
+    LOG.info("Redirection to following URL should happen : "
+        + urlBuffer.toString());
+    return urlBuffer.toString();
+  }
 
-	@Override
-	public AccessGrant verifyResponse(final Map<String, String> requestParams,
-			final String methodType) throws Exception {
-		LOG.info("Verifying the authentication response from provider");
-		if (!providerState) {
-			throw new ProviderStateException();
-		}
-		if (requestToken == null) {
-			throw new SocialAuthException("Request token is null");
-		}
-		String verifier = requestParams.get(Constants.OAUTH_VERIFIER);
-		if (verifier != null) {
-			requestToken.setAttribute(Constants.OAUTH_VERIFIER, verifier);
-		}
-		LOG.debug("Call to fetch Access Token");
-		accessToken = oauth.getAccessToken(
-				endpoints.get(Constants.OAUTH_ACCESS_TOKEN_URL), requestToken);
-		accessToken.setPermission(permission);
-		accessToken.setProviderId(providerId);
-		return accessToken;
-	}
+  @Override
+  public AccessGrant verifyResponse(final Map<String, String> requestParams,
+      final String methodType) throws Exception {
+    LOG.info("Verifying the authentication response from provider");
+    if (!providerState) {
+      throw new ProviderStateException();
+    }
+    if (requestToken == null) {
+      throw new SocialAuthException("Request token is null");
+    }
+    String verifier = requestParams.get(Constants.OAUTH_VERIFIER);
+    if (verifier != null) {
+      requestToken.setAttribute(Constants.OAUTH_VERIFIER, verifier);
+    }
+    LOG.debug("Call to fetch Access Token");
+    accessToken = oauth.getAccessToken(
+        endpoints.get(Constants.OAUTH_ACCESS_TOKEN_URL), requestToken);
+    accessToken.setPermission(permission);
+    accessToken.setProviderId(providerId);
+    return accessToken;
+  }
 
-	@Override
-	public AccessGrant verifyResponse(final Map<String, String> requestParams)
-			throws Exception {
-		return verifyResponse(requestParams, MethodType.GET.toString());
-	}
+  @Override
+  public AccessGrant verifyResponse(final Map<String, String> requestParams)
+      throws Exception {
+    return verifyResponse(requestParams, MethodType.GET.toString());
+  }
 
-	@Override
-	public void setScope(final String scope) {
-		this.scope = scope;
-	}
+  @Override
+  public void setScope(final String scope) {
+    this.scope = scope;
+  }
 
-	@Override
-	public void setPermission(final Permission permission) {
-		this.permission = permission;
-	}
+  @Override
+  public void setPermission(final Permission permission) {
+    this.permission = permission;
+  }
 
-	@Override
-	public Response executeFeed(final String url) throws Exception {
-		return oauth.httpGet(url, null, accessToken);
-	}
+  @Override
+  public Response executeFeed(final String url) throws Exception {
+    return oauth.httpGet(url, null, accessToken);
+  }
 
-	@Override
-	public Response executeFeed(final String urlStr, final String methodType,
-			final Map<String, String> params,
-			final Map<String, String> headerParams, final String body)
-			throws Exception {
-		Response response = null;
-		if (accessToken == null) {
-			throw new SocialAuthException(
-					"Please call verifyResponse function first to get Access Token");
-		}
-		if (MethodType.GET.toString().equals(methodType)) {
-			try {
-				response = oauth.httpGet(urlStr, headerParams, accessToken);
-			} catch (Exception ie) {
-				throw new SocialAuthException(
-						"Error while making request to URL : " + urlStr, ie);
-			}
-		} else if (MethodType.PUT.toString().equals(methodType)) {
-			try {
-				response = oauth.httpPut(urlStr, params, headerParams, body,
-						accessToken);
-			} catch (Exception e) {
-				throw new SocialAuthException(
-						"Error while making request to URL : " + urlStr, e);
-			}
-		} else if (MethodType.POST.toString().equals(methodType)) {
-			try {
-				response = oauth.httpPost(urlStr, params, headerParams, body,
-						accessToken);
-			} catch (Exception e) {
-				throw new SocialAuthException(
-						"Error while making request to URL : " + urlStr, e);
-			}
-		}
-		return response;
-	}
+  @Override
+  public Response executeFeed(final String urlStr, final String methodType,
+      final Map<String, String> params,
+      final Map<String, String> headerParams, final String body)
+      throws Exception {
+    Response response = null;
+    if (accessToken == null) {
+      throw new SocialAuthException(
+          "Please call verifyResponse function first to get Access Token");
+    }
+    if (MethodType.GET.toString().equals(methodType)) {
+      try {
+        response = oauth.httpGet(urlStr, headerParams, accessToken);
+      } catch (Exception ie) {
+        throw new SocialAuthException(
+            "Error while making request to URL : " + urlStr, ie);
+      }
+    } else if (MethodType.PUT.toString().equals(methodType)) {
+      try {
+        response = oauth.httpPut(urlStr, params, headerParams, body,
+            accessToken);
+      } catch (Exception e) {
+        throw new SocialAuthException(
+            "Error while making request to URL : " + urlStr, e);
+      }
+    } else if (MethodType.POST.toString().equals(methodType)) {
+      try {
+        response = oauth.httpPost(urlStr, params, headerParams, body,
+            accessToken);
+      } catch (Exception e) {
+        throw new SocialAuthException(
+            "Error while making request to URL : " + urlStr, e);
+      }
+    }
+    return response;
+  }
 
-	@Override
-	public void setAccessGrant(final AccessGrant accessGrant) {
-		this.accessToken = accessGrant;
-	}
+  @Override
+  public void setAccessGrant(final AccessGrant accessGrant) {
+    this.accessToken = accessGrant;
+  }
 
-	@Override
-	public void setAccessTokenParameterName(
-			final String accessTokenParameterName) {
-		LOG.warn("It is not implemented for OAuth1");
+  @Override
+  public void setAccessTokenParameterName(
+      final String accessTokenParameterName) {
+    LOG.warn("It is not implemented for OAuth1");
 
-	}
+  }
 
-	@Override
-	public void logout() {
-		accessToken = null;
-		providerState = false;
-	}
+  @Override
+  public void logout() {
+    accessToken = null;
+    providerState = false;
+  }
 
-	@Override
-	public Response uploadImage(final String url, final String methodType,
-			final Map<String, String> params,
-			final Map<String, String> headerParams, final String fileName,
-			final InputStream inputStream, final String fileParamName)
-			throws Exception {
-		return oauth.uploadImage(url, params, headerParams, inputStream,
-				fileParamName, fileName, methodType, accessToken, true);
-	}
+  @Override
+  public Response uploadImage(final String url, final String methodType,
+      final Map<String, String> params,
+      final Map<String, String> headerParams, final String fileName,
+      final InputStream inputStream, final String fileParamName)
+      throws Exception {
+    return oauth.uploadImage(url, params, headerParams, inputStream,
+        fileParamName, fileName, methodType, accessToken, true);
+  }
 
-	@Override
-	public AccessGrant getAccessGrant() {
-		return accessToken;
-	}
+  @Override
+  public AccessGrant getAccessGrant() {
+    return accessToken;
+  }
 
 }
