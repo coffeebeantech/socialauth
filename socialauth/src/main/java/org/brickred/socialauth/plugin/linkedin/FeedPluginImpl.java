@@ -48,15 +48,15 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 /**
- * Feed Plugin implementation for Linkedin
+ * Feed Plugin implementation for LinkedIn OAuth2 Provider
  *
  * @author tarun.nagpal
  *
  */
 public class FeedPluginImpl implements FeedPlugin, Serializable {
 
-  private static final long serialVersionUID = 497690659988355485L;
-  private static final String FEED_URL = "http://api.linkedin.com/v1/people/~/network/updates";
+  private static final long serialVersionUID = -5703250073492118123L;
+  private static final String FEED_URL = "https://api.linkedin.com/v1/people/~/network/updates?oauth2_access_token=";
   private static final Map<String, String> UPDATE_TYPES;
   private final Log LOG = LogFactory.getLog(this.getClass());
 
@@ -151,7 +151,8 @@ public class FeedPluginImpl implements FeedPlugin, Serializable {
     Response serviceResponse = null;
     List<Feed> list;
     try {
-      serviceResponse = providerSupport.api(FEED_URL);
+      serviceResponse = providerSupport.api(FEED_URL
+          + providerSupport.getAccessGrant().getKey());
     } catch (Exception ie) {
       throw new SocialAuthException("Failed to retrieve the feeds from "
           + FEED_URL, ie);

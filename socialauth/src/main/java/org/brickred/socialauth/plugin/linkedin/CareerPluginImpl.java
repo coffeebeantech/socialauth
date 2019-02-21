@@ -43,19 +43,18 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 /**
- * Career plugin implementation for linkedin
+ * Career plugin implementation for LinkedIn OAuth2 provider
  *
  * @author tarun.nagpal
  *
  */
 public class CareerPluginImpl implements CareerPlugin, Serializable {
 
-  private static final long serialVersionUID = -1733773634998485298L;
-
+  private static final long serialVersionUID = 3296673276334272488L;
   private ProviderSupport providerSupport;
   private final Log LOG = LogFactory.getLog(this.getClass());
 
-  private static final String PROFILE_URL = "http://api.linkedin.com/v1/people/~:(id,phone-numbers,headline,educations,positions,recommendations-received)";
+  private static final String PROFILE_URL = "https://api.linkedin.com/v1/people/~:(id,phone-numbers,headline,educations,positions,recommendations-received)?oauth2_access_token=";
 
   public CareerPluginImpl(final ProviderSupport providerSupport) {
     this.providerSupport = providerSupport;
@@ -66,7 +65,8 @@ public class CareerPluginImpl implements CareerPlugin, Serializable {
     LOG.info("Fetching career details from " + PROFILE_URL);
     Response serviceResponse = null;
     try {
-      serviceResponse = providerSupport.api(PROFILE_URL);
+      serviceResponse = providerSupport.api(PROFILE_URL
+          + providerSupport.getAccessGrant().getKey());
     } catch (Exception ie) {
       throw new SocialAuthException(
           "Failed to retrieve the career details from " + PROFILE_URL,

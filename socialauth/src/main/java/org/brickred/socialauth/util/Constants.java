@@ -213,11 +213,6 @@ public interface Constants {
   public static final String NIMBLE = "nimble";
 
   /**
-   * linkedin OAuth2 provider
-   */
-  public static final String LINKEDINOAUTH2 = "linkedin2";
-
-  /**
    * amazon
    */
   public static final String AMAZON = "amazon";

@@ -1,6 +1,6 @@
 /*
  ===========================================================================
- Copyright (c) 2010 BrickRed Technologies Limited
+ Copyright (c) 2014 BrickRed Technologies Limited
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -41,7 +41,7 @@ import org.brickred.socialauth.Profile;
 import org.brickred.socialauth.exception.AccessTokenExpireException;
 import org.brickred.socialauth.exception.ServerDataException;
 import org.brickred.socialauth.exception.SocialAuthException;
-import org.brickred.socialauth.oauthstrategy.OAuth1;
+import org.brickred.socialauth.oauthstrategy.OAuth2;
 import org.brickred.socialauth.oauthstrategy.OAuthStrategyBase;
 import org.brickred.socialauth.util.AccessGrant;
 import org.brickred.socialauth.util.BirthDate;
@@ -54,20 +54,21 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 /**
- * Implementation of LinkedIn provider. This uses the OAuth API provided by
- * Linkedin
+ * Implementation of LinkedIn provider. This uses the OAuth2 API provided
+ * by LinkedIn
  *
  *
- * @author tarunn@brickred.com
+ * @author vineet.aggarwal@3pillarglobal.com
+ * @author tarun.nagpal
  *
  */
 
 public class LinkedInImpl extends AbstractProvider {
 
-  private static final long serialVersionUID = -6141448721085510813L;
-  private static final String CONNECTION_URL = "http://api.linkedin.com/v1/people/~/connections:(id,first-name,last-name,public-profile-url,picture-url)";
-  private static final String UPDATE_STATUS_URL = "http://api.linkedin.com/v1/people/~/shares";
-  private static final String PROFILE_URL = "http://api.linkedin.com/v1/people/~:(id,first-name,last-name,languages,date-of-birth,picture-url,email-address,location:(name),phone-numbers,main-address)";
+  private static final long serialVersionUID = 3389564715902769183L;
+  private static final String CONNECTION_URL = "https://api.linkedin.com/v1/people/~/connections:(id,first-name,last-name,public-profile-url,picture-url)?oauth2_access_token=";
+  private static final String UPDATE_STATUS_URL = "https://api.linkedin.com/v1/people/~/shares?oauth2_access_token=";
+  private static final String PROFILE_URL = "https://api.linkedin.com/v1/people/~:(id,first-name,last-name,languages,date-of-birth,picture-url,email-address,location:(name),phone-numbers,main-address)?oauth2_access_token=";
   private static final String STATUS_BODY = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><share><comment>%1$s</comment><visibility><code>anyone</code></visibility></share>";
   private static final Map<String, String> ENDPOINTS;
   private final Log LOG = LogFactory.getLog(LinkedInImpl.class);
@@ -77,20 +78,19 @@ public class LinkedInImpl extends AbstractProvider {
   private OAuthConfig config;
   private Profile userProfile;
   private OAuthStrategyBase authenticationStrategy;
+  private String state;
 
-  private static final String[] AllPerms = new String[] { "r_basicprofile",
-      "r_emailaddress", "w_share" };
-  private static final String[] AuthPerms = new String[] { "r_basicprofile",
+  private static final String[] AllPerms = new String[] { "r_liteprofile",
+      "r_emailaddress", "r_network", "r_contactinfo", "r_feed" };
+  private static final String[] AuthPerms = new String[] { "r_liteprofile",
       "r_emailaddress" };
 
   static {
     ENDPOINTS = new HashMap<String, String>();
-    ENDPOINTS.put(Constants.OAUTH_REQUEST_TOKEN_URL,
-        "https://api.linkedin.com/uas/oauth/requestToken");
     ENDPOINTS.put(Constants.OAUTH_AUTHORIZATION_URL,
-        "https://api.linkedin.com/uas/oauth/authenticate");
+        "https://www.linkedin.com/oauth/v2/authorization");
     ENDPOINTS.put(Constants.OAUTH_ACCESS_TOKEN_URL,
-        "https://api.linkedin.com/uas/oauth/accessToken");
+        "https://www.linkedin.com/oauth/v2/accessToken");
   }
 
   /**
@@ -101,20 +101,14 @@ public class LinkedInImpl extends AbstractProvider {
    *            and consumer secret
    * @throws Exception
    */
-  public LinkedInImpl(final OAuthConfig providerConfig) throws Exception {
+  public LinkedInImpl(final OAuthConfig providerConfig)
+      throws Exception {
     config = providerConfig;
+    state = "SocialAuth" + System.currentTimeMillis();
     // Need to pass scope while fetching RequestToken from LinkedIn for new
     // keys
     if (config.getCustomPermissions() != null) {
       scope = Permission.CUSTOM;
-    }
-
-    if (config.getRequestTokenUrl() != null) {
-      ENDPOINTS.put(Constants.OAUTH_REQUEST_TOKEN_URL,
-          config.getRequestTokenUrl());
-    } else {
-      config.setRequestTokenUrl(ENDPOINTS
-          .get(Constants.OAUTH_REQUEST_TOKEN_URL));
     }
 
     if (config.getAuthenticationUrl() != null) {
@@ -133,26 +127,9 @@ public class LinkedInImpl extends AbstractProvider {
           .get(Constants.OAUTH_ACCESS_TOKEN_URL));
     }
 
-    String perms = getScope();
-    if (perms != null) {
-      String rURL = ENDPOINTS.get(Constants.OAUTH_REQUEST_TOKEN_URL);
-      if (!rURL.contains("scope=")) {
-        rURL += "?scope=" + perms;
-      } else {
-        rURL = rURL.substring(0, rURL.indexOf('?'));
-        rURL += "?scope=" + perms;
-      }
-      ENDPOINTS.put(Constants.OAUTH_REQUEST_TOKEN_URL, rURL);
-      config.setRequestTokenUrl(rURL);
-
-    }
-    authenticationStrategy = new OAuth1(config, ENDPOINTS);
-    config.setRequestTokenUrl(ENDPOINTS
-        .get(Constants.OAUTH_REQUEST_TOKEN_URL));
-    config.setAuthenticationUrl(ENDPOINTS
-        .get(Constants.OAUTH_AUTHORIZATION_URL));
-    config.setAccessTokenUrl(ENDPOINTS
-        .get(Constants.OAUTH_ACCESS_TOKEN_URL));
+    authenticationStrategy = new OAuth2(config, ENDPOINTS);
+    authenticationStrategy.setPermission(scope);
+    authenticationStrategy.setScope(getScope());
   }
 
   /**
@@ -179,7 +156,9 @@ public class LinkedInImpl extends AbstractProvider {
 
   @Override
   public String getLoginRedirectURL(final String successUrl) throws Exception {
-    return authenticationStrategy.getLoginRedirectURL(successUrl);
+    Map<String, String> map = new HashMap<String, String>();
+    map.put(Constants.STATE, state);
+    return authenticationStrategy.getLoginRedirectURL(successUrl, map);
   }
 
   /**
@@ -196,6 +175,13 @@ public class LinkedInImpl extends AbstractProvider {
   @Override
   public Profile verifyResponse(final Map<String, String> requestParams)
       throws Exception {
+    if (requestParams.containsKey(Constants.STATE)) {
+      String stateStr = requestParams.get(Constants.STATE);
+      if (!state.equals(stateStr)) {
+        throw new SocialAuthException(
+            "State parameter value does not match with expected value");
+      }
+    }
     return doVerifyResponse(requestParams);
   }
 
@@ -218,8 +204,8 @@ public class LinkedInImpl extends AbstractProvider {
     LOG.info("Fetching contacts from " + CONNECTION_URL);
     Response serviceResponse = null;
     try {
-      serviceResponse = authenticationStrategy
-          .executeFeed(CONNECTION_URL);
+      serviceResponse = authenticationStrategy.executeFeed(CONNECTION_URL
+          + authenticationStrategy.getAccessGrant().getKey());
     } catch (Exception ie) {
       throw new SocialAuthException(
           "Failed to retrieve the contacts from " + CONNECTION_URL,
@@ -297,8 +283,9 @@ public class LinkedInImpl extends AbstractProvider {
     Response serviceResponse = null;
     try {
       serviceResponse = authenticationStrategy.executeFeed(
-          UPDATE_STATUS_URL, MethodType.POST.toString(), null,
-          headerParams, msgBody);
+          UPDATE_STATUS_URL
+              + authenticationStrategy.getAccessGrant().getKey(),
+          MethodType.POST.toString(), null, headerParams, msgBody);
     } catch (Exception ie) {
       throw new SocialAuthException("Failed to update status on "
           + UPDATE_STATUS_URL, ie);
@@ -323,7 +310,8 @@ public class LinkedInImpl extends AbstractProvider {
     Profile profile = new Profile();
     Response serviceResponse = null;
     try {
-      serviceResponse = authenticationStrategy.executeFeed(PROFILE_URL);
+      serviceResponse = authenticationStrategy.executeFeed(PROFILE_URL
+          + authenticationStrategy.getAccessGrant().getKey());
     } catch (Exception e) {
       throw new SocialAuthException(
           "Failed to retrieve the user profile from  " + PROFILE_URL,

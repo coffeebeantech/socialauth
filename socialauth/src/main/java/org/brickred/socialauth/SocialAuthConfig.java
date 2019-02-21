@@ -117,8 +117,6 @@ public class SocialAuthConfig implements Serializable {
         org.brickred.socialauth.provider.FlickerImpl.class);
     providersImplMap.put(Constants.NIMBLE,
         org.brickred.socialauth.provider.NimbleImpl.class);
-    providersImplMap.put(Constants.LINKEDINOAUTH2,
-        org.brickred.socialauth.provider.LinkedInOAuth2Impl.class);
     providersImplMap.put(Constants.AMAZON,
         org.brickred.socialauth.provider.AmazonImpl.class);
     providersImplMap.put(Constants.STACK_EXCHANGE,
@@ -142,7 +140,6 @@ public class SocialAuthConfig implements Serializable {
     domainMap.put(Constants.GITHUB, "api.github.com");
     domainMap.put(Constants.FLICKR, "www.flickr.com");
     domainMap.put(Constants.NIMBLE, "api.nimble.com");
-    domainMap.put(Constants.LINKEDINOAUTH2, "api.linkedin.com");
     domainMap.put(Constants.AMAZON, "amazon.com");
     domainMap.put(Constants.STACK_EXCHANGE, "stackapps.com");
 
