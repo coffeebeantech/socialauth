@@ -80,18 +80,18 @@ public class LinkedInOAuth2Impl extends AbstractProvider {
   private OAuthStrategyBase authenticationStrategy;
   private String state;
 
-  private static final String[] AllPerms = new String[] { "r_fullprofile",
-      "r_emailaddress", "r_network", "r_contactinfo", "rw_nus" };
-  private static final String[] AuthPerms = new String[] { "r_fullprofile",
+  private static final String[] AllPerms = new String[] { "r_liteprofile",
+      "r_emailaddress", "r_network", "r_contactinfo", "r_feed" };
+  private static final String[] AuthPerms = new String[] { "r_liteprofile",
       "r_emailaddress" };
 
-  static {
-    ENDPOINTS = new HashMap<String, String>();
-    ENDPOINTS.put(Constants.OAUTH_AUTHORIZATION_URL,
-        "https://www.linkedin.com/uas/oauth2/authorization");
-    ENDPOINTS.put(Constants.OAUTH_ACCESS_TOKEN_URL,
-        "https://www.linkedin.com/uas/oauth2/accessToken");
-  }
+	static {
+		ENDPOINTS = new HashMap<String, String>();
+		ENDPOINTS.put(Constants.OAUTH_AUTHORIZATION_URL,
+				"https://www.linkedin.com/oauth/v2/authorization");
+		ENDPOINTS.put(Constants.OAUTH_ACCESS_TOKEN_URL,
+				"https://www.linkedin.com/oauth/v2/accessToken");
+	}
 
   /**
    * Stores configuration for the provider
