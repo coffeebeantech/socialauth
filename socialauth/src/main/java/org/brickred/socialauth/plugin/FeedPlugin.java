@@ -30,17 +30,17 @@ import org.brickred.socialauth.Feed;
 
 /**
  * Provides the functionality related to feeds
- * 
+ *
  * @author tarun.nagpal
- * 
+ *
  */
 public interface FeedPlugin extends Plugin {
 
-	/**
-	 * Returns the list of feed
-	 * 
-	 * @return List of feed
-	 * @throws Exception
-	 */
-	public List<Feed> getFeeds() throws Exception;
+  /**
+   * Returns the list of feed
+   *
+   * @return List of feed
+   * @throws Exception
+   */
+  public List<Feed> getFeeds() throws Exception;
 }

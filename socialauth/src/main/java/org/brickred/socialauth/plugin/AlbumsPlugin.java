@@ -30,17 +30,17 @@ import org.brickred.socialauth.Album;
 
 /**
  * Provides the functionality related to albums and photos
- * 
+ *
  * @author tarun.nagpal
- * 
+ *
  */
 public interface AlbumsPlugin extends Plugin {
 
-	/**
-	 * Returns the list of Album
-	 * 
-	 * @return list of albums
-	 * @throws Exception
-	 */
-	public List<Album> getAlbums() throws Exception;
+  /**
+   * Returns the list of Album
+   *
+   * @return list of albums
+   * @throws Exception
+   */
+  public List<Album> getAlbums() throws Exception;
 }
